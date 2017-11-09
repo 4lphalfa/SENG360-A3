@@ -38,9 +38,7 @@ public class Client {
 		    Common commonLib = new Common();
 		    String userInput;
 		    	
-		    // Start retrieval thread
-		    Thread listener = new Thread( new MessageListener( in, "Server" ) );
-		    listener.start();
+
 
 		    System.out.println("Client started!");
 
@@ -64,6 +62,10 @@ public class Client {
 				}
 		    }
 
+
+		    // Start retrieval thread
+		    Thread listener = new Thread( new MessageListener( in, "Server" ) );
+		    listener.start();
 
 	    	while( ( userInput = stdIn.readLine() ) != null ){ // TODO: fix graphical issue for when messages pop up when typing a message
 	        	// Send off the message

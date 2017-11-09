@@ -39,9 +39,7 @@ public class Server {
 		    	// Prepare common functions library
 		    Common commonLib = new Common();
 
-		    // Start retrieval thread
-		    Thread listener = new Thread( new MessageListener( in, "Client" ) );
-			listener.start();
+
 
 		    System.out.println( "Server started!" );
 
@@ -56,7 +54,7 @@ public class Server {
 
 					if(userInput.trim().equals(option)) { //If client security option matches continue with authenication
 						commonLib.sendMessage( "Correct Mode", out, "" ); //Let the client know it is in correct mode
-						System.out.println("Authenicate"); // TODO: remove this debugging println
+						System.out.println("Authenticate"); // TODO: remove this debugging println
 						boolean authenticated = authenticateClient(in, out); //try and authenticate the client
 					
 						if(authenticated) { //if the client has been authenticated set bool to break loop and go to normal chat service
@@ -70,7 +68,14 @@ public class Server {
 					}
 		    	}
 		    }	
-			    	
+					
+			System.out.println("Hm");
+
+		    // Start retrieval thread
+		    Thread listener = new Thread( new MessageListener( in, "Client" ) );
+			listener.start();
+
+
 		    while( ( userInput = stdIn.readLine() ) != null ){ // TODO: fix graphical issue for when messages pop up when typing a message
 		       	// Send off the message
 		     	commonLib.sendMessage( userInput, out, "" );
