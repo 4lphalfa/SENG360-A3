@@ -1,6 +1,9 @@
 import javax.crypto.*;
+import java.security.*;
+import java.security.spec.*;
 import java.io.*;
 import java.net.*;
+import java.util.Base64;
 
 public class Client {
     public static void main( String args[] ) {
@@ -17,6 +20,7 @@ public class Client {
         try(
             Socket serverSocket = new Socket( hostName, portNumber );
 
+            // PrintWriter out = new PrintWriter( serverSocket.getOutputStream(), true );
             PrintWriter out = new PrintWriter( serverSocket.getOutputStream(), true );
             BufferedReader in = new BufferedReader( new InputStreamReader( serverSocket.getInputStream() ) );
             BufferedReader stdIn = new BufferedReader( new InputStreamReader( System.in ) );
@@ -24,20 +28,26 @@ public class Client {
             // Prepare common functions library
             Common commonLib = new Common();
 
+            System.out.println("Client started!");
+
+
+            // If integrity, send this as part of handshake
+            commonLib.createKeysAndSharePublic( out, "" );
+
+            // Expect handshake response
+            byte[] handshakeMessage = Base64.getDecoder().decode( in.readLine() );
+
+            KeyFactory keyFact = KeyFactory.getInstance("RSA");
+            PublicKey serverPuKey = keyFact.generatePublic( new X509EncodedKeySpec( handshakeMessage ) );
+
+            System.out.println(serverPuKey);
+            
+            // TODO: Client-side authentication goes here
+
             // Start retrieval thread
             Thread listener = new Thread( new MessageListener( in, "Server" ) );
             listener.start();
 
-            System.out.println("Client started!");
-
-            // Send handshake message
-            // String handshakeMessage = "placeholder";
-            // commonLib.sendMessage( handshakeMessage, out, "" );
-
-            // Expect handshake response
-            // userInput = stdIn.readLine();
-            
-            // TODO: Client-side authentication goes here
 
 
             String userInput;
@@ -50,6 +60,12 @@ public class Client {
             System.exit( 1 );
         }catch( IOException e ){
             System.err.println( "Couldn't get I/O for the connection to " + hostName );
+            System.exit( 1 );
+        }catch( NoSuchAlgorithmException e ){
+            System.err.println( "Attempted to create a key pair with an invalid algorithm" );
+            System.exit( 1 );
+        }catch( InvalidKeySpecException e ){
+            System.err.println( "Exception caught for Key Spec" );
             System.exit( 1 );
         }
     }
