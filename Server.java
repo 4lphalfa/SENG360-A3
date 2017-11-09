@@ -1,6 +1,10 @@
 import javax.crypto.*;
 import java.net.*;
 import java.io.*;
+import java.security.*;
+import java.util.Base64;
+import java.nio.file.*;
+import java.util.*;
 
 public class Server {
 
@@ -43,9 +47,6 @@ public class Server {
 
 		    String userInput;
 
-
-
-
 			// TODO: Make this a switch statement when the other security options are impliemented
 		    if( "A".equals(option) ) { //Authentication chosen as the securtiy option
 		    	boolean authFlag = false;
@@ -68,8 +69,7 @@ public class Server {
 						commonLib.sendMessage( "Incorrect Mode", out, "");
 					}
 		    	}
-		    }
-			
+		    }	
 			    	
 		    while( ( userInput = stdIn.readLine() ) != null ){ // TODO: fix graphical issue for when messages pop up when typing a message
 		       	// Send off the message
@@ -82,6 +82,51 @@ public class Server {
 	}
 
 	private static boolean authenticateClient( BufferedReader in, PrintWriter out ) {
+
+		try {
+			
+			String encodedHashedStr = in.readLine();
+			System.out.println("Server-Side");
+			System.out.println(encodedHashedStr);
+			String[] encodedHashedInfo = encodedHashedStr.split("\\s+");
+			String hashedUsername = new String(Base64.getDecoder().decode(encodedHashedInfo[0]));
+			String hashedPassword = new String(Base64.getDecoder().decode(encodedHashedInfo[1]));
+			String hashedSecret = "";
+			FileReader fReader = new FileReader( "SecureFolder/AuthenticatedUsers.txt" );
+			BufferedReader bReader = new BufferedReader(fReader);
+			int i = 0;
+
+			while(bReader.readLine() != null) {
+				String curLine = bReader.readLine();
+				String[] splitString = curLine.split("\\s+");
+				System.out.println(i);
+				System.out.println(hashedUsername);
+				System.out.println(splitString[0]);
+				System.out.println(hashedUsername);
+				System.out.println(splitString[1]);				
+				if( hashedUsername.equals(splitString[0]) && hashedPassword.equals(splitString[1]) ) {
+					hashedSecret = splitString[2];
+					break;
+				}
+				i++;
+			}
+			bReader.close();
+
+			if(hashedSecret != "") {
+				System.out.println(hashedSecret);
+				System.out.println(hashedSecret.getBytes());
+				//commonLib.sendMessage( Base64.getEncoder().encodeToString(hashedSecret.getBytes()), out, "" );
+			} else {
+				System.err.println( "User not found" );
+				return false;
+			}
+
+		} catch( IOException e ){
+		    System.err.println( e );
+		    System.exit( 1 );
+		}
+
+
 		return true;
 	}
 }
