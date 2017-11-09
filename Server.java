@@ -34,9 +34,17 @@ public class Server {
             Common commonLib = new Common();
                     
             // Expect a handshake message
-            // userInput = stdIn.readLine();
+            String initialHandshake = in.readLine();
+            byte[] clientPubKeyEnc = commonLib.decodeBase64( initialHandshake );
 
-            // TODO: Server-side authentication goes here;
+            KeyFactory keyFact = KeyFactory.getInstance("DH");    
+            PublicKey clientPubKey = keyFact.generatePublic( new X509EncodedKeySpec( clientPubKeyEnc ) );
+
+            System.out.write( clientPubKey );
+            System.out.println();
+
+
+
 
             // Start retrieval thread
             MessageListener init = new MessageListener( in, "Client" );

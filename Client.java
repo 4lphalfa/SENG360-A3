@@ -55,25 +55,25 @@ public class Client {
             
             // The Client encodes its public key, and sends it over to The Server.
             byte[] clientPubKeyEnc = clientKpair.getPublic().getEncoded();
-            byte[] serverPubKeyEnc = clientPubKeyEnc;
+            out.println( commonLib.encodeWithBase64( clientPubKeyEnc ) );
+            System.out.write( clientPubKeyEnc );
+            System.out.println();
+
+
+            // Send the clientPubKeyEnc to server, encode with base64
+
+
+            // byte[] serverPubKeyEnc = clientPubKeyEnc;
             
             // The Client uses The Server's public key for the first (and only) phase of its version of the DH protocol.
-            KeyFactory clientKeyFac = KeyFactory.getInstance("DH");
-            X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(serverPubKeyEnc);
-            PublicKey serverPubKey = clientKeyFac.generatePublic(x509KeySpec);
+            // KeyFactory clientKeyFac = KeyFactory.getInstance("DH");
+            // X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(serverPubKeyEnc);
+            // PublicKey serverPubKey = clientKeyFac.generatePublic(x509KeySpec);
             
-            // Before it can do so, it has to instantiate a DH public key from The Server's encoded key material.
-            System.out.println("Client: Execute PHASE1 ...");
-            clientKeyAgree.doPhase(serverPubKey, true);
+            // // Before it can do so, it has to instantiate a DH public key from The Server's encoded key material.
+            // System.out.println("Client: Execute PHASE1 ...");
+            // clientKeyAgree.doPhase(serverPubKey, true);
             
-            // Send handshake message
-            // String handshakeMessage = "placeholder";
-            // commonLib.sendMessage( handshakeMessage, out, "" );
-
-            // Expect handshake response
-            // userInput = stdIn.readLine();
-            
-            // TODO: Client-side authentication goes here
 
 
             String userInput;

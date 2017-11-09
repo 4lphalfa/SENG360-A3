@@ -1,4 +1,6 @@
 import java.io.*;
+import java.util.Base64;
+
 
 public class Common {
     public void sendMessage( String input, PrintWriter out, String tags ){
@@ -10,5 +12,13 @@ public class Common {
         // if( tags.toLowerCase().contains("i") )
 
         out.println( input );
+    }
+
+    public String encodeWithBase64( byte[] input ){
+        return Base64.getEncoder().encodeToString( input );
+    }
+
+    public byte[] decodeBase64( String input ){
+        return Base64.getDecoder().decode( input );
     }
 }
