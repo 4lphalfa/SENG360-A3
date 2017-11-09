@@ -30,7 +30,7 @@ public class MessageListener implements Runnable{
 
         try{
             while( ( fromMessage = in.readLine() ) != null ){
-                System.out.println( fromWho + ": " + decrypt(key, initVector, fromMessage) );
+                System.out.println( fromWho + ": " + fromMessage );
             }
         }catch( IOException e ){
             System.err.println( "Message reading error!" );
@@ -48,7 +48,7 @@ public class MessageListener implements Runnable{
         }
         return null;
     }
-
+/*
     public static String decrypt(String key, String initVector, String cyphertext) {
         // Retrieve the parameter that was used, and transfer it to Alice in
         // encoded format
@@ -58,7 +58,7 @@ public class MessageListener implements Runnable{
          * Let's turn over to Bob. Bob has received Alice's public key
          * in encoded format.
          * He instantiates a DH public key from the encoded key material.
-         */
+         *
         KeyFactory serverKeyFac = KeyFactory.getInstance("DH");
         X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(clientPubKeyEnc);
 
@@ -67,7 +67,7 @@ public class MessageListener implements Runnable{
         /*
          * The Server gets the DH parameters associated with The Client's public key.
          * It must use the same parameters when it generates its own key pair.
-         */
+         *
         DHParameterSpec dhParamFromClientPubKey = ((DHPublicKey)clientPubKey).getParams();
         
         // The Server creates its own DH key pair
@@ -88,13 +88,13 @@ public class MessageListener implements Runnable{
          * Bob uses Alice's public key for the first (and only) phase
          * of his version of the DH
          * protocol.
-         */
+         *
         System.out.println("Server: Execute PHASE1 ...");
         serverKeyAgree.doPhase(clientPubKey, true);
         try {
             /*
              * Alice decrypts, using AES in CBC mode
-             */
+             *
 
             // Instantiate AlgorithmParameters object from parameter encoding
             // obtained from Bob
@@ -126,5 +126,5 @@ public class MessageListener implements Runnable{
         }
 
         return null;
-    }  
+    }  */
 }

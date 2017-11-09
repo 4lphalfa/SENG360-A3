@@ -79,9 +79,6 @@ public class Client {
             String userInput;
             while( ( userInput = stdIn.readLine() ) != null ){ // TODO: fix graphical issue for when messages pop up when typing a message
                 // Send off the message
-                String tmpEncrypt = encrypt(clientKeyAgree, userInput);
-                System.out.println(tmpEncrypt);
-                System.out.println(decrypt(clientKeyAgree, tmpEncrypt));
                 commonLib.sendMessage( encrypt(clientKeyAgree, userInput), out, "" );
             }
         }catch ( UnknownHostException e ){
