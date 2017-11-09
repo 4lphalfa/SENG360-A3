@@ -11,8 +11,11 @@ public class Server {
         // Set-up
         System.out.println( "Starting Server.java..." );
 
-        if ( args.length != 1 ){
-            System.err.println( "Usage: java Server <port number>" );
+        String tags = "";
+        if( args.length >= 2 ){
+            tags = args[1];
+        }else if( args.length < 1 ){
+            System.err.println( "Usage: java Server <port number> <optional tags: c, i, and/or a>" );
             System.exit( 1 );
         }
          
@@ -22,7 +25,6 @@ public class Server {
             ServerSocket serverSocket = new ServerSocket( Integer.parseInt( args[0] ) );
             Socket clientSocket = serverSocket.accept();
 
-            // PrintWriter out = new PrintWriter( clientSocket.getOutputStream(), true );
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true );
             BufferedReader in = new BufferedReader( new InputStreamReader( clientSocket.getInputStream() ) );
             BufferedReader stdIn = new BufferedReader( new InputStreamReader( System.in ) );
@@ -34,31 +36,36 @@ public class Server {
 
 
             // Expect a handshake message
-            byte[] handshakeMessage = Base64.getDecoder().decode( in.readLine() );
+            
+            // TODO: Make sure this assumption that the handshakeMessage is always encoded is true
+            byte[] handshakeMessage = commonLib.decodeBase64( in.readLine() );
 
-            KeyFactory keyFact = KeyFactory.getInstance("RSA");
-            PublicKey clientPuKey = keyFact.generatePublic( new X509EncodedKeySpec( handshakeMessage ) );
+            // If integrity needed
+            PublicKey clientPuKey = null;
+            if( tags.toLowerCase().contains("i") ){
+                KeyFactory keyFact = KeyFactory.getInstance("RSA");
+                clientPuKey = keyFact.generatePublic( new X509EncodedKeySpec( handshakeMessage ) );
 
-            System.out.println(clientPuKey);
-
-            // Send your own public key if integrity is set
-            commonLib.createKeysAndSharePublic( out, "" );
+                // Send your own public key if integrity is set
+                commonLib.createKeysAndSharePublic( out, tags);
+            }else if( !(new String( handshakeMessage )).contains( "Simple handshake" ) ){
+                System.out.println( "Client connecting with Integrity enabled. Both programs must be in the same mode!\nShutting down...");
+                System.exit( 1 );
+            }
 
 
             // TODO: Server-side authentication goes here
 
-
             // Start retrieval thread
-            Thread listener = new Thread( new MessageListener( in, "Client" ) );
-            listener.start();
+            commonLib.startInboxThread( in, "Client", tags, clientPuKey );
 
 
             String userInput;
-
             while( ( userInput = stdIn.readLine() ) != null ){ // TODO: fix graphical issue for when messages pop up when typing a message
                 // Send off the message
-                commonLib.sendMessage( userInput, out, "" );
+                commonLib.sendMessage( userInput, out, tags );
             }
+
         }catch( IOException e ){
             System.out.println( "Exception caught when trying to listen on port " + portNumber + " or listening for a connection" );
             System.out.println( e.getMessage() );
