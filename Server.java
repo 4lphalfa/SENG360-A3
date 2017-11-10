@@ -106,12 +106,34 @@ public class Server {
 			FileReader fReader = new FileReader( "SecureFolder/AuthenticatedUsers.txt" );
 			BufferedReader bReader = new BufferedReader(fReader);
 
+<<<<<<< HEAD
 			String curLine = "";
 
 			while( (curLine = bReader.readLine()) != null ) {		
+=======
+			while( bReader.readLine() != null ) {
+				String curLine = bReader.readLine();
+				System.out.println(curLine);
+
+>>>>>>> 4dc9913657b157c2185f5528c97859485c6ab832
 				String[] splitString = curLine.split(" ");
+
+                for(int i = 0; i < splitString.length; i++){
+                    System.out.println(splitString[i]);
+                }
 				
+<<<<<<< HEAD
 				if( encodedUsername.equals(splitString[0]) && encodedPass.equals(splitString[1]) ) {
+=======
+                System.out.println("End test");
+
+
+				if( encodedUsername == splitString[0] && encodedPass == splitString[1] ) {
+					System.out.println(curLine);
+					System.out.println(splitString[0]);
+					System.out.println(splitString[1]);
+					System.out.println(splitString[2]);
+>>>>>>> 4dc9913657b157c2185f5528c97859485c6ab832
 					cipheredSecret = splitString[2];
 					break;
 				}
