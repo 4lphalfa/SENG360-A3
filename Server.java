@@ -36,8 +36,10 @@ public class Server {
 		    BufferedReader in = new BufferedReader( new InputStreamReader( clientSocket.getInputStream() ) );
 		    BufferedReader stdIn = new BufferedReader( new InputStreamReader( System.in ) );
 		) {
+		    	// Prepare common functions library
+		    Common commonLib = new Common();
 
-		    Common commonLib = new Common(); // Prepare common functions library
+
 
 		    System.out.println( "Server started!" );
 
@@ -55,7 +57,7 @@ public class Server {
 						System.out.println("Authenticating Client...");
 						boolean authenticated = authenticateClient(in, out, commonLib); //try and authenticate the client
 					
-						if(authenticated) { //if the client has been authenticated set bool to break loop and go to normal chat
+						if(authenticated) { //if the client has been authenticated set bool to break loop and go to normal chat service
 							authFlag = true;							
 						} else { //if the client has not been authenticate let it know, dont break out of the loop, continue to wait for authentic client
 							System.err.println("Client Failed to Authenticate");
@@ -104,34 +106,12 @@ public class Server {
 			FileReader fReader = new FileReader( "SecureFolder/AuthenticatedUsers.txt" );
 			BufferedReader bReader = new BufferedReader(fReader);
 
-<<<<<<< HEAD
 			String curLine = "";
 
 			while( (curLine = bReader.readLine()) != null ) {		
-=======
-			while( bReader.readLine() != null ) {
-				String curLine = bReader.readLine();
-				System.out.println(curLine);
-
->>>>>>> 4dc9913657b157c2185f5528c97859485c6ab832
 				String[] splitString = curLine.split(" ");
-
-                for(int i = 0; i < splitString.length; i++){
-                    System.out.println(splitString[i]);
-                }
 				
-<<<<<<< HEAD
 				if( encodedUsername.equals(splitString[0]) && encodedPass.equals(splitString[1]) ) {
-=======
-                System.out.println("End test");
-
-
-				if( encodedUsername == splitString[0] && encodedPass == splitString[1] ) {
-					System.out.println(curLine);
-					System.out.println(splitString[0]);
-					System.out.println(splitString[1]);
-					System.out.println(splitString[2]);
->>>>>>> 4dc9913657b157c2185f5528c97859485c6ab832
 					cipheredSecret = splitString[2];
 					break;
 				}
