@@ -54,7 +54,7 @@ public class Server {
 
 					if(userInput.trim().equals(option)) { //If client security option matches continue with authenication
 						commonLib.sendMessage( "Correct Mode", out, "" ); //Let the client know it is in correct mode
-						System.out.println("Authenticating Client..."); // TODO: remove this debugging println
+						System.out.println("Authenticating Client...");
 						boolean authenticated = authenticateClient(in, out, commonLib); //try and authenticate the client
 					
 						if(authenticated) { //if the client has been authenticated set bool to break loop and go to normal chat service
@@ -106,18 +106,13 @@ public class Server {
 			FileReader fReader = new FileReader( "SecureFolder/AuthenticatedUsers.txt" );
 			BufferedReader bReader = new BufferedReader(fReader);
 
-			while( bReader.readLine() != null ) {
-				String curLine = bReader.readLine();
-				System.out.println(curLine);
+			String curLine = "";
+
+			while( (curLine = bReader.readLine()) != null ) {		
 				String[] splitString = curLine.split(" ");
 				
-				if( encodedUsername == splitString[0] && encodedPass == splitString[1] ) {
-					System.out.println(curLine);
-					System.out.println(splitString[0]);
-					System.out.println(splitString[1]);
-					System.out.println(splitString[2]);
+				if( encodedUsername.equals(splitString[0]) && encodedPass.equals(splitString[1]) ) {
 					cipheredSecret = splitString[2];
-					System.out.println(cipheredSecret);
 					break;
 				}
 			}
@@ -129,9 +124,16 @@ public class Server {
 				return false;
 			}
 
-			System.out.println( "We got to somewhere we don't want to be, that is if the secret is null" );
-			System.out.println( cipheredSecret );
 			commonLib.sendMessage( cipheredSecret, out, "" );
+
+			String clientResponse = in.readLine();
+			if(clientResponse.equals("Authenticated")) {
+				System.out.println("Authenticated Client, Begin Chat");
+				System.out.println("________________________________");
+			} else {
+				return false;
+			}
+
 
 		} catch( NoSuchAlgorithmException e ) {
 			System.err.println( e );

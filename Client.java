@@ -50,7 +50,6 @@ public class Client {
 		    	userInput = in.readLine(); // read back the respose from the server 
 				
 				if( "Correct Mode".equals( userInput.trim() ) ) { // if the server responds that the client is in a matching mode, procede with authentication
-					System.out.println("In Correct Mode"); // TODO: remove this debugging println
 					boolean authenticated = authenticateWServer( in, stdIn, out, commonLib );
 
 					if( !authenticated ) { // if the authentication fails close the client
@@ -63,6 +62,10 @@ public class Client {
 				}
 		    }
 
+		    commonLib.sendMessage("Authenticated", out, "");
+
+			System.out.println("Authenticated Server, Begin Chat");
+			System.out.println("________________________________");
 
 		    // Start retrieval thread
 		    Thread listener = new Thread( new MessageListener( in, "Server" ) );
@@ -96,6 +99,7 @@ public class Client {
 		String secret = "";
 
 		try {
+
 			Cipher c = Cipher.getInstance("AES");
 			String cipherBase = "sjkvndshjdfkfhs1";
 			byte[] cipherBaseBytes = cipherBase.getBytes();
@@ -116,14 +120,13 @@ public class Client {
 			
 			String userPass = username + " " + pass;
 
-			commonLib.sendMessage( userPass, out, "");
+			commonLib.sendMessage( userPass, out, "" );
 
 			String cipheredSecret = in.readLine();
-			System.out.println(cipheredSecret);
-			
-			byte[] decryptedSecretBytes = c.doFinal(cipheredSecret.getBytes());
-			System.out.println(decryptedSecretBytes);
-			String decryptedSecret = decryptedSecretBytes.toString();
+			cipheredSecret = cipheredSecret.trim();
+
+			byte[] decryptedSecretBytes = c.doFinal( Base64.getDecoder().decode(cipheredSecret));
+			String decryptedSecret = new String(decryptedSecretBytes);
 
 			if( !secret.equals(decryptedSecret)) {
 				System.out.println("Could not Authenticate the server, please try agian");
@@ -146,9 +149,6 @@ public class Client {
 
 			writer.write(strToWrite, 0, strToWrite.length());
 			writer.close();*/
-
-			System.out.println("Authenticated Server, Begin Chat");
-			System.out.println("________________________________");
 		} catch( NoSuchAlgorithmException e ) {
 			System.err.println( e );
 			System.exit( 1 );
