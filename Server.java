@@ -109,8 +109,16 @@ public class Server {
 			while( bReader.readLine() != null ) {
 				String curLine = bReader.readLine();
 				System.out.println(curLine);
+
 				String[] splitString = curLine.split(" ");
+
+                for(int i = 0; i < splitString.length; i++){
+                    System.out.println(splitString[i]);
+                }
 				
+                System.out.println("End test");
+
+
 				if( encodedUsername == splitString[0] && encodedPass == splitString[1] ) {
 					System.out.println(curLine);
 					System.out.println(splitString[0]);
