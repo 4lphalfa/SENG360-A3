@@ -36,10 +36,8 @@ public class Server {
 		    BufferedReader in = new BufferedReader( new InputStreamReader( clientSocket.getInputStream() ) );
 		    BufferedReader stdIn = new BufferedReader( new InputStreamReader( System.in ) );
 		) {
-		    	// Prepare common functions library
-		    Common commonLib = new Common();
 
-
+		    Common commonLib = new Common(); // Prepare common functions library
 
 		    System.out.println( "Server started!" );
 
@@ -57,7 +55,7 @@ public class Server {
 						System.out.println("Authenticating Client...");
 						boolean authenticated = authenticateClient(in, out, commonLib); //try and authenticate the client
 					
-						if(authenticated) { //if the client has been authenticated set bool to break loop and go to normal chat service
+						if(authenticated) { //if the client has been authenticated set bool to break loop and go to normal chat
 							authFlag = true;							
 						} else { //if the client has not been authenticate let it know, dont break out of the loop, continue to wait for authentic client
 							System.err.println("Client Failed to Authenticate");

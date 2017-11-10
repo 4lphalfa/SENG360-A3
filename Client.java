@@ -35,12 +35,10 @@ public class Client {
 		    BufferedReader in = new BufferedReader( new InputStreamReader( serverSocket.getInputStream() ) );
 		    BufferedReader stdIn = new BufferedReader( new InputStreamReader( System.in ) );
 		) {
-		 	// Prepare common functions library
-		    Common commonLib = new Common();
+
+		    Common commonLib = new Common(); // Prepare common functions library
 		    String userInput;
 		    	
-
-
 		    System.out.println("Client started!");
 
 			// TODO: Make this a switch statement when the other security options are impliemented
