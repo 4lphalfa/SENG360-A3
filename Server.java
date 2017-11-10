@@ -54,8 +54,8 @@ public class Server {
 
 					if(userInput.trim().equals(option)) { //If client security option matches continue with authenication
 						commonLib.sendMessage( "Correct Mode", out, "" ); //Let the client know it is in correct mode
-						System.out.println("Authenticate"); // TODO: remove this debugging println
-						boolean authenticated = authenticateClient(in, out); //try and authenticate the client
+						System.out.println("Authenticating Client..."); // TODO: remove this debugging println
+						boolean authenticated = authenticateClient(in, out, commonLib); //try and authenticate the client
 					
 						if(authenticated) { //if the client has been authenticated set bool to break loop and go to normal chat service
 							authFlag = true;							
@@ -68,8 +68,6 @@ public class Server {
 					}
 		    	}
 		    }	
-					
-			System.out.println("Hm");
 
 		    // Start retrieval thread
 		    Thread listener = new Thread( new MessageListener( in, "Client" ) );
@@ -86,46 +84,58 @@ public class Server {
 		}
 	}
 
-	private static boolean authenticateClient( BufferedReader in, PrintWriter out ) {
+	private static boolean authenticateClient( BufferedReader in, PrintWriter out, Common commonLib ) {
 
 		try {
 			
-			String encodedHashedStr = in.readLine();
-			System.out.println("Server-Side");
-			System.out.println(encodedHashedStr);
-			String[] encodedHashedInfo = encodedHashedStr.split("\\s+");
-			String hashedUsername = new String(Base64.getDecoder().decode(encodedHashedInfo[0]));
-			String hashedPassword = new String(Base64.getDecoder().decode(encodedHashedInfo[1]));
-			String hashedSecret = "";
+			String userPass = in.readLine();
+			String[] userPassSplit = userPass.split(" ");
+			MessageDigest hashFunc = MessageDigest.getInstance( "SHA-256" );
+
+			if( userPassSplit.length != 2 ) {
+				System.out.println("Incorrect information sent from client, closing");
+				System.exit( 1 );
+			}
+			String username = userPassSplit[0];
+			String password = userPassSplit[1];
+			String cipheredSecret = "";
+
+			String encodedUsername = Base64.getEncoder().encodeToString(hashFunc.digest(username.getBytes())); //get an encoded, hashed username to compare to user list
+			String encodedPass = Base64.getEncoder().encodeToString(hashFunc.digest(password.getBytes())); //get an encoded, hashed password to compare to user list
+
 			FileReader fReader = new FileReader( "SecureFolder/AuthenticatedUsers.txt" );
 			BufferedReader bReader = new BufferedReader(fReader);
-			int i = 0;
 
-			while(bReader.readLine() != null) {
+			while( bReader.readLine() != null ) {
 				String curLine = bReader.readLine();
-				String[] splitString = curLine.split("\\s+");
-				System.out.println(i);
-				System.out.println(hashedUsername);
-				System.out.println(splitString[0]);
-				System.out.println(hashedUsername);
-				System.out.println(splitString[1]);				
-				if( hashedUsername.equals(splitString[0]) && hashedPassword.equals(splitString[1]) ) {
-					hashedSecret = splitString[2];
+				System.out.println(curLine);
+				String[] splitString = curLine.split(" ");
+				
+				if( encodedUsername == splitString[0] && encodedPass == splitString[1] ) {
+					System.out.println(curLine);
+					System.out.println(splitString[0]);
+					System.out.println(splitString[1]);
+					System.out.println(splitString[2]);
+					cipheredSecret = splitString[2];
+					System.out.println(cipheredSecret);
 					break;
 				}
-				i++;
 			}
+
 			bReader.close();
 
-			if(hashedSecret != "") {
-				System.out.println(hashedSecret);
-				System.out.println(hashedSecret.getBytes());
-				//commonLib.sendMessage( Base64.getEncoder().encodeToString(hashedSecret.getBytes()), out, "" );
-			} else {
-				System.err.println( "User not found" );
+			if( cipheredSecret == "" ) { //if we didnt find a cipheredsecret then we didnt find the user and authentication has failed
+				System.err.println("User not found");
 				return false;
 			}
 
+			System.out.println( "We got to somewhere we don't want to be, that is if the secret is null" );
+			System.out.println( cipheredSecret );
+			commonLib.sendMessage( cipheredSecret, out, "" );
+
+		} catch( NoSuchAlgorithmException e ) {
+			System.err.println( e );
+			System.exit( 1 );
 		} catch( IOException e ){
 		    System.err.println( e );
 		    System.exit( 1 );

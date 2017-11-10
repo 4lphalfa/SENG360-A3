@@ -1,4 +1,5 @@
 import javax.crypto.*;
+import javax.crypto.spec.SecretKeySpec;
 import java.net.*;
 import java.io.*;
 import java.security.*;
@@ -95,9 +96,11 @@ public class Client {
 		String secret = "";
 
 		try {
-
-			MessageDigest hashFunc = MessageDigest.getInstance("SHA-256");
+			Cipher c = Cipher.getInstance("AES");
+			String cipherBase = "sjkvndshjdfkfhs1";
+			byte[] cipherBaseBytes = cipherBase.getBytes();
 			System.out.println("Please enter authentication information");
+
 
 			System.out.println("User Name: ");
 			username = stdIn.readLine();
@@ -108,48 +111,61 @@ public class Client {
 			System.out.println("Secret: ");
 			secret = stdIn.readLine();
 
+			SecretKey key = new SecretKeySpec(cipherBaseBytes, "AES");
+			c.init(Cipher.DECRYPT_MODE, key);
+			
+			String userPass = username + " " + pass;
+
+			commonLib.sendMessage( userPass, out, "");
+
+			String cipheredSecret = in.readLine();
+			System.out.println(cipheredSecret);
+			
+			byte[] decryptedSecretBytes = c.doFinal(cipheredSecret.getBytes());
+			System.out.println(decryptedSecretBytes);
+			String decryptedSecret = decryptedSecretBytes.toString();
+
+			if( !secret.equals(decryptedSecret)) {
+				System.out.println("Could not Authenticate the server, please try agian");
+				System.exit( 1 );
+			}
+			//THIS WHOLE BLOCK COMMENTED OUT AS IT WAS USED TO GENERATE OOB USER/PASS/SECRET FOR SERVER SIDE
+			/*
+			MessageDigest hashFunc = MessageDigest.getInstance("SHA-256");
+			c.init(Cipher.ENCRYPT_MODE, key);
+			byte[] cipherBytes = c.doFinal(secret.getBytes());
+			String encodedSecret = Base64.getEncoder().encodeToString(cipherBytes);
 			String encodedHashedUsername = Base64.getEncoder().encodeToString(hashFunc.digest(username.getBytes())); //get an encoded, hashed username
 			String hashedUsername = new String(hashFunc.digest(username.getBytes()));
-			//System.out.println( "Username" );
-			//System.out.println( encodedHashedUsername ); // TODO remove these debug printlns
 			String encodedHashedPass = Base64.getEncoder().encodeToString(hashFunc.digest(pass.getBytes())); //get an encoded, hashed password
 			String hashedPass = new String(hashFunc.digest(pass.getBytes()));
-			//System.out.println( "Password" );
-			//System.out.println( encodedHashedPass ); // TODO remove these debug printlns
-			String hashedSecret = new String(hashFunc.digest(secret.getBytes())); //got a hashed password, we don't need to encode it since it isn't being sent to the server
-			//System.out.println( "Secret" );
-			//System.out.println( encodedHashedSecret ); // TODO remove these debug printlns
-			String encodedHashedSendStr = encodedHashedUsername + " " + encodedHashedPass;
-			System.out.println(encodedHashedSendStr); // TODO remove this debug println
-			
-			//THIS WHOLE BLOCK COMMENTED OUT AS IT WAS USED TO SETUP THE STORED USERNAME AND PASSWORDS
-			//Path path = FileSystems.getDefault().getPath("SecureFolder", "AuthenticatedUsers.txt");
-			//FileWriter fWriter = new FileWriter( "SecureFolder/AuthenticatedUsers.txt", true );
-			//BufferedWriter writer = new BufferedWriter(fWriter);
-			//String hashedStr = hashedUsername + " " + hashedPass + " " + hashedSecret + "\n";
-			//System.out.println(hashedStr);
-			//System.out.println(hashedStr.length());
-			//writer.write(hashedStr, 0, hashedStr.length());
-			//writer.close();
+			Path path = FileSystems.getDefault().getPath("SecureFolder", "AuthenticatedUsers.txt");
+			FileWriter fWriter = new FileWriter( "SecureFolder/AuthenticatedUsers.txt", true );
+			BufferedWriter writer = new BufferedWriter(fWriter);
+			String strToWrite = encodedHashedUsername + " " + encodedHashedPass + " " + encodedSecret + "\n";
 
-			commonLib.sendMessage( encodedHashedSendStr, out, "" );
+			writer.write(strToWrite, 0, strToWrite.length());
+			writer.close();*/
 
-			String encodedHashedSecret = in.readLine();
-			System.out.println("Read line back from server");
-			String hashedSecretFrServer = new String(Base64.getDecoder().decode(encodedHashedSecret));
-
-			if( !hashedSecret.equals(hashedSecretFrServer) ) {
-				System.err.println( "Could not authenticate the server, please restart the client and try agian" );
-				System.exit( 1 ); 
-			}
-
-			System.out.println("Authentication finished");
-
+			System.out.println("Authenticated Server, Begin Chat");
+			System.out.println("________________________________");
 		} catch( NoSuchAlgorithmException e ) {
+			System.err.println( e );
+			System.exit( 1 );
+		}catch ( NoSuchPaddingException e ){
 			System.err.println( e );
 			System.exit( 1 );
 		} catch( IOException e ){
 		    System.err.println( e );
+		    System.exit( 1 );
+		} catch( InvalidKeyException e ) {
+		    System.err.println( e );
+		    System.exit( 1 );
+		} catch( IllegalBlockSizeException e ) {
+			System.err.println( e );
+		    System.exit( 1 );
+		} catch( BadPaddingException e ) {
+			System.err.println( e );
 		    System.exit( 1 );
 		}
 
