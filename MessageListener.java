@@ -11,18 +11,20 @@ import java.security.KeyPairGenerator;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.io.*;
+import java.util.Base64;
+
 
 import javax.xml.bind.DatatypeConverter;
 
 public class MessageListener implements Runnable{
     private BufferedReader in;
     private String fromWho;
-    private KeyAgreement secret;
+    private SecretKeySpec dhKey;
 
-    public MessageListener(BufferedReader in, String fromWho, KeyAgreement secret){
+    public MessageListener(BufferedReader in, String fromWho, SecretKeySpec dhKey){
         this.in = in;
         this.fromWho = fromWho;
-        this.secret = secret;
+        this.dhKey = dhKey;
     }
 
     public void run(){
@@ -48,20 +50,20 @@ public class MessageListener implements Runnable{
         }
         return null;
     }
-    public String decrypt(String ciphertext) {
+    public String decrypt(String input) {
         try {
-            System.out.println("encrypted bytes: " + ciphertext);
-            System.out.println();
-            System.out.println("converted to byte: ");
-            System.out.write(DatatypeConverter.parseBase64Binary(ciphertext));
-            System.out.println();
-            SecretKeySpec aesKey = new SecretKeySpec(secret.generateSecret(), 0, 16, "AES");
+            String[] strings = input.split(" ", 2);
+            String base64EncodedParameters = strings[0];
+            String ciphertext = strings[1];
+
+            byte[] encodedParams = Base64.getDecoder().decode( base64EncodedParameters );
+
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+
             AlgorithmParameters aesParams = AlgorithmParameters.getInstance("AES");
-            byte[] encodedParams = cipher.getParameters().getEncoded();
             aesParams.init(encodedParams);
-            cipher.init(Cipher.DECRYPT_MODE, aesKey, aesParams);
-            byte[] recovered = cipher.doFinal(DatatypeConverter.parseBase64Binary(ciphertext));
+            cipher.init(Cipher.DECRYPT_MODE, dhKey, aesParams);
+            byte[] recovered = cipher.doFinal(Base64.getDecoder().decode(ciphertext.getBytes()));
             
             return new String(recovered);
         } catch (Exception ex) {

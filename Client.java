@@ -9,6 +9,8 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
+
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -34,8 +36,6 @@ public class Client {
             // Prepare common functions library
             Common commonLib = new Common();
 
-            System.out.println("Client started!");
-            
             // The Client creates its own DH key pair with 2048-bit key size
             System.out.println("Client: Generate DH keypair ...");
             KeyPairGenerator clientKpairGen = KeyPairGenerator.getInstance("DH");
@@ -50,8 +50,6 @@ public class Client {
             // The Client encodes its public key, and sends it over to The Server.
             byte[] clientPubKeyEnc = clientKpair.getPublic().getEncoded();
             out.println( commonLib.encodeWithBase64( clientPubKeyEnc ) );
-            System.out.println( clientPubKeyEnc );
-            System.out.println();
 
             // Expect a handshake message
             String initialHandshake = in.readLine();
@@ -61,33 +59,23 @@ public class Client {
             PublicKey serverPubKey = keyFact.generatePublic( new X509EncodedKeySpec( serverPubKeyEnc ) );
             
             clientKeyAgree.doPhase(serverPubKey, true);
-            // Send the clientPubKeyEnc to server, encode with base64
-            
-            
 
-
-            // byte[] serverPubKeyEnc = clientPubKeyEnc;
-            
-            // The Client uses The Server's public key for the first (and only) phase of its version of the DH protocol.
-            //KeyFactory clientKeyFac = KeyFactory.getInstance("DH");
-            //X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(serverPubKeyEnc);
-            //PublicKey serverPubKey = clientKeyFac.generatePublic(x509KeySpec);
-            
-            // // Before it can do so, it has to instantiate a DH public key from The Server's encoded key material.
-            // System.out.println("Client: Execute PHASE1 ...");
-            //clientKeyAgree.doPhase(serverPubKey, true);
+            SecretKeySpec clientAesKey = new SecretKeySpec(clientKeyAgree.generateSecret(), 0, 16, "AES");
 
 
             // Start retrieval thread
-            MessageListener init = new MessageListener( in, "Server", clientKeyAgree);
+            MessageListener init = new MessageListener( in, "Server", clientAesKey);
             Thread listener = new Thread(init );
             listener.start(); 
             
 
+            System.out.println("Client started!");
+
+
             String userInput;
             while( ( userInput = stdIn.readLine() ) != null ){ // TODO: fix graphical issue for when messages pop up when typing a message
                 // Send off the message
-                commonLib.sendMessage( encrypt(clientKeyAgree, userInput), out, "" );
+                commonLib.sendMessage( encrypt(clientAesKey, userInput), out, "" );
             }
         }catch ( UnknownHostException e ){
             System.err.println( "Don't know about host " + hostName );
@@ -99,22 +87,22 @@ public class Client {
         
     }
     
-    public static String encrypt(KeyAgreement keyAgree, String message) {
+    public static String encrypt(SecretKeySpec clientAesKey, String message) {
         try {
-            byte[] clientSharedSecret = keyAgree.generateSecret();
-            SecretKeySpec clientAesKey = new SecretKeySpec(clientSharedSecret, 0, 16, "AES");
-            
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+
             cipher.init(Cipher.ENCRYPT_MODE, clientAesKey);
+
+            byte[] encodedCipherParameters = cipher.getParameters().getEncoded();
+            String base64EncodedCipherParameters = Base64.getEncoder().encodeToString( encodedCipherParameters );
+
             byte[] cleartext = message.getBytes();
             byte[] ciphertext = cipher.doFinal(cleartext);
 
-            System.out.println("encrypted bytes: ");
-            System.out.write(ciphertext);
-            System.out.println();
-            System.out.println("encrypted string: " + DatatypeConverter.printBase64Binary(ciphertext));
+            String toSend = base64EncodedCipherParameters + " " + Base64.getEncoder().encodeToString(ciphertext);
 
-            return DatatypeConverter.printBase64Binary(ciphertext);
+
+            return toSend;
         } catch (Exception ex) {
             ex.printStackTrace();
         }

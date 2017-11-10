@@ -15,6 +15,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 
 public class Server {
     public static void main( String args[] )throws Exception {
@@ -45,9 +46,6 @@ public class Server {
 
             KeyFactory keyFact = KeyFactory.getInstance("DH");
             PublicKey clientPubKey = keyFact.generatePublic( new X509EncodedKeySpec( clientPubKeyEnc ) );
-
-            System.out.println( clientPubKey );
-            System.out.println();
             
             /*
              * Bob gets the DH parameters associated with Alice's public key.
@@ -70,29 +68,22 @@ public class Server {
             // The Client encodes its public key, and sends it over to The Server.
             byte[] serverPubKeyEnc = serverKpair.getPublic().getEncoded();
             out.println( commonLib.encodeWithBase64( serverPubKeyEnc ) );
-            System.out.println( serverPubKeyEnc );
-            System.out.println();
-            
 
             serverKeyAgree.doPhase(clientPubKey, true);
 
-
-
-
+            SecretKeySpec serverAesKey = new SecretKeySpec(serverKeyAgree.generateSecret(), 0, 16, "AES");
 
             // Start retrieval thread
-            MessageListener init = new MessageListener( in, "Client" , serverKeyAgree);
+            MessageListener init = new MessageListener( in, "Client" , serverAesKey);
             Thread listener = new Thread( init );
             listener.start();
 
             System.out.println( "Server started!" );
 
             String userInput;
-
-
             while( ( userInput = stdIn.readLine() ) != null ){ // TODO: fix graphical issue for when messages pop up when typing a message
                 // Send off the message
-                commonLib.sendMessage( encrypt(serverKeyAgree, userInput), out, "" );
+                commonLib.sendMessage( encrypt(serverAesKey, userInput), out, "" );
                 
             }
         }catch( IOException e ){
@@ -101,23 +92,21 @@ public class Server {
         }
     }
     
-    public static String encrypt(KeyAgreement keyAgree, String message) {
+    public static String encrypt(SecretKeySpec serverAesKey, String message) {
         try {
-            byte[] serverSharedSecret = keyAgree.generateSecret();
-            SecretKeySpec serverAesKey = new SecretKeySpec(serverSharedSecret, 0, 16, "AES");
-
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
             cipher.init(Cipher.ENCRYPT_MODE, serverAesKey);
+
+            byte[] encodedCipherParameters = cipher.getParameters().getEncoded();
+            String base64EncodedCipherParameters = Base64.getEncoder().encodeToString( encodedCipherParameters );
 
             byte[] cleartext = message.getBytes();
             byte[] ciphertext = cipher.doFinal(cleartext);
             
-            System.out.println("encrypted bytes: ");
-            System.out.write(ciphertext);
-            System.out.println();
-            System.out.println("encrypted string: " + DatatypeConverter.printBase64Binary(ciphertext));
+            String toSend = base64EncodedCipherParameters + " " + Base64.getEncoder().encodeToString(ciphertext);
 
-            return DatatypeConverter.printBase64Binary(ciphertext);
+
+            return toSend;
         } catch (Exception ex) {
             ex.printStackTrace();
         }
