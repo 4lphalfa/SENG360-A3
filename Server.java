@@ -51,9 +51,9 @@ public class Server {
             System.err.println( "Usage: java Server <port number> <optional tags: c, i, and/or a>" );
             System.exit( 1 );
         }
-         
+        
         int portNumber = Integer.parseInt( args[0] );
-         
+        
         try(
             ServerSocket serverSocket = new ServerSocket( Integer.parseInt( args[0] ) );
             Socket clientSocket = serverSocket.accept();
@@ -143,6 +143,27 @@ public class Server {
                     System.out.println("Invalid client attempted to connect!");
                 }
             }
+
+            if( tags.toLowerCase().contains("a") ) { //Authentication chosen as the securtiy option
+                boolean authFlag = false;
+
+                while( !authFlag ) { //While the client hasn't authenticated loop waiting for it
+                    if(in.readLine().trim().equals("A")) { //If client security option matches continue with authenication
+                        commonLib.sendMessage( "Correct Mode", out, "", serverAesKey ); //Let the client know it is in correct mode
+                        System.out.println("Authenticating Client...");
+                        boolean authenticated = authenticateClient(in, out, commonLib, serverAesKey ); //try and authenticate the client
+                    
+                        if(authenticated) { //if the client has been authenticated set bool to break loop and go to normal chat service
+                            authFlag = true;
+                        } else { //if the client has not been authenticate let it know, dont break out of the loop, continue to wait for authentic client
+                            System.err.println("Client Failed to Authenticate");
+                            commonLib.sendMessage("Authentication Failed", out, "", serverAesKey);
+                        }
+                    } else { //else client security option is incorrect, let the client know
+                        commonLib.sendMessage( "Incorrect Mode", out, "", serverAesKey);
+                    }
+                }
+            }	
             
             
             // else if( !(new String( initialHandshake )).contains( "Simple handshake" ) ){
@@ -182,5 +203,68 @@ public class Server {
                 System.err.println( "Invalid Algorithm Parameter!" );
                 System.exit( 1 );
         }
+    }
+
+    private static boolean authenticateClient( BufferedReader in, PrintWriter out, Common commonLib, SecretKeySpec serverAesKey ) {
+
+        try {
+            
+            String userPass = in.readLine();
+            String[] userPassSplit = userPass.split(" ");
+            MessageDigest hashFunc = MessageDigest.getInstance( "SHA-256" );
+
+            if( userPassSplit.length != 2 ) {
+                System.out.println("Incorrect information sent from client, closing");
+                System.exit( 1 );
+            }
+            String username = userPassSplit[0];
+            String password = userPassSplit[1];
+            String cipheredSecret = "";
+
+            String encodedUsername = Base64.getEncoder().encodeToString(hashFunc.digest(username.getBytes())); //get an encoded, hashed username to compare to user list
+            String encodedPass = Base64.getEncoder().encodeToString(hashFunc.digest(password.getBytes())); //get an encoded, hashed password to compare to user list
+
+            FileReader fReader = new FileReader( "SecureFolder/AuthenticatedUsers.txt" );
+            BufferedReader bReader = new BufferedReader(fReader);
+
+            String curLine = "";
+
+            while( (curLine = bReader.readLine()) != null ) {		
+                String[] splitString = curLine.split(" ");
+                
+                if( encodedUsername.equals(splitString[0]) && encodedPass.equals(splitString[1]) ) {
+                    cipheredSecret = splitString[2];
+                    break;
+                }
+            }
+
+            bReader.close();
+
+            if( cipheredSecret == "" ) { //if we didnt find a cipheredsecret then we didnt find the user and authentication has failed
+                System.err.println("User not found");
+                return false;
+            }
+
+            commonLib.sendMessage( cipheredSecret, out, "", serverAesKey );
+
+            String clientResponse = in.readLine();
+            if(clientResponse.equals("Authenticated")) {
+                System.out.println("Authenticated Client, Begin Chat");
+                System.out.println("________________________________");
+            } else {
+                return false;
+            }
+
+
+        } catch( NoSuchAlgorithmException e ) {
+            System.err.println( e );
+            System.exit( 1 );
+        } catch( IOException e ){
+            System.err.println( e );
+            System.exit( 1 );
+        }
+
+
+        return true;
     }
 }
