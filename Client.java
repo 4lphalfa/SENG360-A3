@@ -13,8 +13,6 @@ import java.security.spec.X509EncodedKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
 public class Client {
-    static String key = "Bar12345Bar12345"; // 128 bit key
-    static String initVector = "RandomInitVector"; // 16 bytes IV 
     public static void main( String args[] ) throws Exception {
         if( args.length != 2 ){
             System.err.println( "Usage: java Client <host name> <port number>" );
@@ -36,10 +34,6 @@ public class Client {
             // Prepare common functions library
             Common commonLib = new Common();
 
-            // Start retrieval thread
-            Thread listener = new Thread( new MessageListener( in, "Server" ) );
-            listener.start();
-
             System.out.println("Client started!");
             
             // The Client creates its own DH key pair with 2048-bit key size
@@ -56,25 +50,39 @@ public class Client {
             // The Client encodes its public key, and sends it over to The Server.
             byte[] clientPubKeyEnc = clientKpair.getPublic().getEncoded();
             out.println( commonLib.encodeWithBase64( clientPubKeyEnc ) );
-            System.out.write( clientPubKeyEnc );
+            System.out.println( clientPubKeyEnc );
             System.out.println();
 
-
+            // Expect a handshake message
+            String initialHandshake = in.readLine();
+            byte[] serverPubKeyEnc = commonLib.decodeBase64( initialHandshake );
+            
+            KeyFactory keyFact = KeyFactory.getInstance("DH");   
+            PublicKey serverPubKey = keyFact.generatePublic( new X509EncodedKeySpec( serverPubKeyEnc ) );
+            
+            clientKeyAgree.doPhase(serverPubKey, true);
             // Send the clientPubKeyEnc to server, encode with base64
+            
+            
 
 
             // byte[] serverPubKeyEnc = clientPubKeyEnc;
             
             // The Client uses The Server's public key for the first (and only) phase of its version of the DH protocol.
-            // KeyFactory clientKeyFac = KeyFactory.getInstance("DH");
-            // X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(serverPubKeyEnc);
-            // PublicKey serverPubKey = clientKeyFac.generatePublic(x509KeySpec);
+            //KeyFactory clientKeyFac = KeyFactory.getInstance("DH");
+            //X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(serverPubKeyEnc);
+            //PublicKey serverPubKey = clientKeyFac.generatePublic(x509KeySpec);
             
             // // Before it can do so, it has to instantiate a DH public key from The Server's encoded key material.
             // System.out.println("Client: Execute PHASE1 ...");
-            // clientKeyAgree.doPhase(serverPubKey, true);
-            
+            //clientKeyAgree.doPhase(serverPubKey, true);
 
+
+            // Start retrieval thread
+            MessageListener init = new MessageListener( in, "Server", clientKeyAgree);
+            Thread listener = new Thread(init );
+            listener.start(); 
+            
 
             String userInput;
             while( ( userInput = stdIn.readLine() ) != null ){ // TODO: fix graphical issue for when messages pop up when typing a message
@@ -94,19 +102,15 @@ public class Client {
     public static String encrypt(KeyAgreement keyAgree, String message) {
         try {
             byte[] clientSharedSecret = keyAgree.generateSecret();
-            IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
-            // SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
             SecretKeySpec clientAesKey = new SecretKeySpec(clientSharedSecret, 0, 16, "AES");
             
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
             cipher.init(Cipher.ENCRYPT_MODE, clientAesKey);
             byte[] cleartext = message.getBytes();
             byte[] ciphertext = cipher.doFinal(cleartext);
-//            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
-//            cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
-//
-//            byte[] encrypted = cipher.doFinal(value.getBytes());
-            //System.out.println("encrypted string: " + DatatypeConverter.printBase64Binary(encrypted));
+
+            System.out.println("encrypted bytes: " + ciphertext);
+            System.out.println("encrypted string: " + DatatypeConverter.printBase64Binary(ciphertext));
 
             return DatatypeConverter.printBase64Binary(ciphertext);
         } catch (Exception ex) {
@@ -115,44 +119,4 @@ public class Client {
 
         return null;
     }
-    
-    public static String decrypt(KeyAgreement keyAgree, String ciphertext) {
-        try {
-            byte[] clientSharedSecret = keyAgree.generateSecret();
-            IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
-            // SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
-            SecretKeySpec clientAesKey = new SecretKeySpec(clientSharedSecret, 0, 16, "AES");
-            
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            
-            // Retrieve the parameter that was used, and transfer it to The Client in encoded format
-            byte[] encodedParams = cipher.getParameters().getEncoded();
-            
-            // Instantiate AlgorithmParameters object from parameter encoding
-            // obtained from Bob
-            AlgorithmParameters aesParams = AlgorithmParameters.getInstance("AES");
-            aesParams.init(encodedParams);
-            cipher.init(Cipher.DECRYPT_MODE, clientAesKey, aesParams);
-            byte[] recovered = cipher.doFinal(DatatypeConverter.parseBase64Binary(ciphertext));
-            System.out.println("The message: " + new String(recovered));
-
-            return new String(recovered);
-            
-//            IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
-//            SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
-//
-//            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
-//            cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
-//
-//            byte[] original = cipher.doFinal(DatatypeConverter.parseBase64Binary(encrypted));
-//
-//            System.out.println(new String(original));
-//            
-//            return new String(original);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-
-        return null;
-    } 
 }
