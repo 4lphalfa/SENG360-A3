@@ -50,8 +50,11 @@ public class MessageListener implements Runnable{
     }
     public String decrypt(String ciphertext) {
         try {
-            System.out.println("ciphertext: " + ciphertext);
-            System.out.println("converted to byte: " + DatatypeConverter.parseBase64Binary(ciphertext));
+            System.out.println("encrypted bytes: " + ciphertext);
+            System.out.println();
+            System.out.println("converted to byte: ");
+            System.out.write(DatatypeConverter.parseBase64Binary(ciphertext));
+            System.out.println();
             SecretKeySpec aesKey = new SecretKeySpec(secret.generateSecret(), 0, 16, "AES");
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
             AlgorithmParameters aesParams = AlgorithmParameters.getInstance("AES");

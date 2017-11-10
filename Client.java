@@ -57,7 +57,7 @@ public class Client {
             String initialHandshake = in.readLine();
             byte[] serverPubKeyEnc = commonLib.decodeBase64( initialHandshake );
             
-            KeyFactory keyFact = KeyFactory.getInstance("DH");   
+            KeyFactory keyFact = KeyFactory.getInstance("DH");
             PublicKey serverPubKey = keyFact.generatePublic( new X509EncodedKeySpec( serverPubKeyEnc ) );
             
             clientKeyAgree.doPhase(serverPubKey, true);
@@ -109,7 +109,9 @@ public class Client {
             byte[] cleartext = message.getBytes();
             byte[] ciphertext = cipher.doFinal(cleartext);
 
-            System.out.println("encrypted bytes: " + ciphertext);
+            System.out.println("encrypted bytes: ");
+            System.out.write(ciphertext);
+            System.out.println();
             System.out.println("encrypted string: " + DatatypeConverter.printBase64Binary(ciphertext));
 
             return DatatypeConverter.printBase64Binary(ciphertext);
