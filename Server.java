@@ -157,7 +157,7 @@ public class Server {
                             authFlag = true;
                         } else { //if the client has not been authenticate let it know, dont break out of the loop, continue to wait for authentic client
                             System.err.println("Client Failed to Authenticate");
-                            commonLib.sendMessage("Authentication Failed", out, "", serverAesKey);
+                            commonLib.sendMessage("Authentication Failed. Goodbye.", out, "", serverAesKey);
                         }
                     } else { //else client security option is incorrect, let the client know
                         commonLib.sendMessage( "Incorrect Mode", out, "", serverAesKey);

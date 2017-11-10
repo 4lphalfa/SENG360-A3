@@ -86,16 +86,11 @@ public class MessageListener implements Runnable{
                     byte[] decodedSig = this.commonLib.decodeBase64( encodedSig );
 
                     try{
-                        System.out.println("Here somewhere");
                         Signature sigVerifier = Signature.getInstance( "SHA512withRSA" );
-                        System.out.println("Here somewhere");
                         sigVerifier.initVerify( this.othersKey );
-                        System.out.println("Here somewhere");
                         sigVerifier.update( toDisplay.getBytes() );
-                        System.out.println("Here somewhere");
 
                         boolean authentic = sigVerifier.verify( decodedSig );
-                        System.out.println("Here somewhere");
                         if( !authentic ){
                             System.out.println( "!!! Following message signature does not match !!!");
                         }

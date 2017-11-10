@@ -53,10 +53,6 @@ public class Common {
             toSend = encrypt( aesKey, toSend );
         }
 
-        System.out.println(toSend);
-        System.out.println();
-        System.out.println();
-
         out.println( toSend );
     }
 
